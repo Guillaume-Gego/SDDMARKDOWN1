@@ -1,9 +1,29 @@
 ---
-title: "Le titre de mon document"
-author: "Mon prénom et mon nom"
-date: "22/08/2020"
+title: "The Nudibranchs"
+author: "By Guillaume Gégo"
+date: "05/10/2020"
 output: html_document
 ---
+
+![Look at him, isn't he sooo cute?](../Images/Nudibranchs1.jpg)
+***
+
+### Introduction
+Nudibranchs are an order of benthic soft-bodied molluscs.They are often referred to as "sea rabbits" and are easily spottable a fascinating palette of colours
+
+
+# Classification
+**Kingdom:** Animalia 
+**Phylum:** Mollusca 
+**Class:** Gastropoda 
+**Subclass:** Heterobranchia 
+**Clade:** Nudipleura 
+**Order:** Nudibranchia
+
+```{r}
+
+```
+
 
 <!--- G.E.
 Cette balise en grisée est une consigne. Il n'est pas utile de la supprimer. Elle ne s'affiche pas dans votre document finale. Afin de compiler votre document, cliquez sur le bouton `knit`
