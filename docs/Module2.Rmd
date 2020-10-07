@@ -1,0 +1,223 @@
+---
+title: "Module 2 - SDD"
+author: "Guillaume Gégo"
+date: "10/7/2020"
+output: html_document
+---
+***
+
+# Comment construire un jeu de données sur R 
+Exemple: biometry et IMC
+  
+Pour toute aide supplémentaire, tapez ?biometry
+
+## 1. Chargement de SciViews::R
+
+```{r} 
+SciViews::R
+```
+
+## 2. Importation du jeu de données
+
+```{r} 
+(biometry<- read("biometry", package = "BioDataScience", lang = "fr"))
+```
+
+## 3. Sélectionner des données du jeu de donnée + raccourcis
+
+```{r} 
+biometry %>.%
+  select(., -c(day_birth, wrist, year_measure)) -> bio	
+```
+Select retire les arguments renseignés (contenus dans c) de la liste biometry (car -arg, si +arg -> on ajoute)
+
+## 4. Ecrire le jeu de donnée sous forme de tableau (en ne gardant que n lignes)
+
+```{r} 
+bio %>.%
+  filter(., gender == "W") %>.%		#On garde que les "W"
+  select(., - age) %>.%		#On retire l'age du tableau
+  head(., n = 8) %>.%		# Garde les huit premières lignes
+  knitr::kable(., align = "c")		# Tableau aligné au centre (Align c), argument appliqué sur le . (8 premières lignes de bio -> biometry sans day_birth, wrist et year_measure)
+```
+
+## 5. Graphiques
+
+### Graphique en barre
+
+```{r} 
+chart(biometry, ~ gender %fill=% gender) +
+  geom_bar(show.legend = FALSE) +		#geom_bar = graphique en barre
+  scale_fill_viridis_d()
+```
+
+### Histogramme
+```{r} 
+chart(biometry, ~ age %fill=% gender | gender) +
+  geom_histogram(bins = 25) +			#geom_histogram = histrogramme
+  scale_fill_viridis_d()
+```
+
+### Graphique en violon
+```{r} 
+a <- chart(biometry, formula = height ~ gender %fill=% gender) +
+  geom_violin(show.legend = FALSE, alpha = 0.4)  +
+  geom_boxplot(width = 0.1, show.legend = FALSE) +
+  scale_fill_viridis_d()
+
+b <- chart(biometry, formula = weight ~ gender %fill=% gender) +
+  geom_violin(show.legend = FALSE, alpha = 0.4)  +
+  geom_boxplot(width = 0.1, show.legend = FALSE) +
+  scale_fill_viridis_d()
+
+ggpubr::ggarrange(a,b)
+```
+
+### Nuage de points (voir plus tard)
+
+chart(biometry, height ~ weight %col=% gender) +
+  
+geom_point() +
+  
+scale_color_viridis_d()^
+
+
+## 6. Création d'un data frame (tableau de données)
+```{r} 
+woman <- data_frame( # Création du tableau de données (data frame)
+  id     = 3:7,       # Valeurs numériques
+  sex    = rep("W", times = 5), # Chaines de caractères (! guillemets)
+)
+```
+
+## 7. Fonction mutation()
+
+### Calculer l'IMC pour les femmes
+Ici, mutation() modifie la structure d'un data frame. 
+  
+En somme: mutation(data_frame, variable en plus = formule de la variable)
+
+Exemple: woman <- mutate(woman, bmi = weight / height^2)
+
+# Afficher le tableau de données
+```{r} 
+woman
+```
+
+## 8. Echantillonage peudo-aléatoire des jeux de donnée---------- 
+
+```{r} 
+biometry <- read("biometry", package = "BioDataScience")		#read lit biometry pour pouvoir l'échantillonner (sample)
+set.seed(50) 						# Initialisation du générateur de nombres pseudo-aléatoires
+```
+
+### Échantillonnage au hasard de 100 individus
+```{r} 
+biometry %>.%
+  sample_n(., size = 100, replace = FALSE) -> bio_100 		#on sample 100 individus (replace = ?) et on appelle l'échantillon bio_100
+bio_100
+
+# Calcul IMC de l'échantillon, on mutate bio_100 pour lui ajouter une colonne de calcul de l'IMC
+
+bio_100 <- mutate(bio_100, bmi = weight / (height / 100)^2)
+# Afficher les premières lignes du tableau de données 
+head(bio_100, n = 5)
+```
+
+### Calcul IMC de biometry (data_frame entier)
+```{r} 
+biometry <- mutate(biometry, bmi = weight / (height / 100)^2)
+```
+### Affichage des 5 premières lignes du tableau de données
+```{r} 
+head(biometry, n = 5)
+```
+
+## 9. CONDITIONS
+Egal à			==
+  
+Différent de		!=
+  
+Supérieur à		>
+  
+Inférieur à			<
+  
+Supérieur ou égal à		>=
+  
+Inférieur ou égal à		<=
+  
+Et (combinaison de tests)	&
+  
+Ou (idem)			 |
+  
+
+case_when() est une fonction qui attribue qqch à qqch ("if statements" en quelque sorte)
+
+### Exemple pour l'échantillon:
+
+Ajouter la nouvelles variable
+```{r} 
+bio_100 <- mutate(bio_100,			#la variable ajoutée est à la ligne suivante (bmi_cat)
+  bmi_cat = case_when(			#bmi_cat = variable tenant compte de l'interprétation de l'oms (surpoids, sous-poids...)
+    bmi < 18.5 ~ "underweight",
+    bmi >= 18.5 & bmi < 25 ~ "normal weight",
+    bmi >= 25 & bmi < 30 ~ "overweight",
+    bmi >= 30 ~ "obese"
+))
+# Afficher le tableau 
+bio_100
+```
+
+
+## 10. Association d'un facteur à une variable dans un tableau
+X$Y = "dans X, je prend Y"
+  
+factor() = association d'un facteur à une variable
+  
+levels = argument qui hiérarchise les différents niveaux du facteur
+
+Ex: Association de l'échelle des oms à une bmi_cat dans l'échantillon
+```{r} 
+bio_100$bmi_cat <- factor(bio_100$bmi_cat,
+  levels = c("underweight", "normal weight", "overweight", "obese"))
+bio_100
+# Visualiser le vecteur
+bio_100$bmi_cat
+# Extraire les niveaux d'encodage des niveaux
+levels(bio_100$bmi_cat)
+```
+/!\ si on utilise ordered(X, Y, Z) à la place de factor(X, Y, Z) --> on indique en plus que X > Y > Z !!
+
+
+## 11. Filtrer un élément particulier sur un échantillon et un nombre de lignes déterminé
+
+### Nombre d'obèses : 12 /100 = 12%
+
+```{r} 
+bio_100 %>.%
+  filter(., bmi_cat == "obese") %>.%			#On filtre l'échantillon sur l'obésité (bmi_cat)
+  nrow(.) / nrow(bio_100) * 100 				# Nbre lignes filtrées / nbre total * 100 = nbre obèses de l'échantillon
+```
+
+## 12. Graphiques avec un tableau de données
+```{r} 
+chart(bio_100, ~ bmi %fill=% gender) +			# ~ argument représenté + fonction de remplissage en couleur = (%fill=%) selon le sexe (+gender)
+  geom_histogram(bins = 25) +				#bins = ?
+  geom_vline(xintercept = 30, color = "red") +		#ligne rouge en x = 30 
+  scale_fill_viridis_d()
+```
+
+## 13. Résumé d'un objet avec summary
+
+```{r} 
+summary(bio_100)
+```
+## 14. Chunks
+Encapsule des fonctions
+ex:
+
+```{r cars, echo=FALSE}		
+summary(cars)			#Va chercher le data_frame cars et l'encapsule dans le chunk "r cars"
+```
+L'impression sur le résultat final (Knit) est cachée par le "echo = FALSE".
+
